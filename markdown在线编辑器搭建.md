@@ -51,6 +51,7 @@ caddy install  #安装Caddy Web Server
 ```
 
 # editor.md在线编辑器
+```
 1.搭建相关web服务器 eg:tomcat Caddy(参考上面安装)
 2.下载editor.md源码 解压到指定web目录
 3.利用example里面例子搭建环境
@@ -64,6 +65,7 @@ https://www.codehui.net/info/40.html
 看效果，从examples找对应的html，对应着添加配置文件即可
 或者参考下其他的文档：
 https://blog.csdn.net/LoveJavaYDJ/article/details/73692917
+```
 
 ## 简易编写实现参数说明
 ```
