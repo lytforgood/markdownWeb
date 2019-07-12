@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="utf-8" />
+    <title>Markdown Online</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/editormd.css" />
+    <link rel="shortcut icon" href="css/favicon.ico" type="image/x-icon" />
+</head>
+<body>
+    <div id="layout">
+        <header>
+            <h1>Markdown Online</h1>
+        </header>
+        <div class="btns">
+<!--             <button id="show-md-online">Markdown Online</button> -->
+            <input type="text" value="文章标题" style="width: 264px;color: #999;padding: 8px;border: 1px solid #ddd;" id="get-md-title">
+<!--             <button id="save-md-service">保存到服务器</button> -->
+            <button id="tipMsg">服务器未保存</button>
+        </div>
+        <div id="test-editormd">
+            <textarea style="display:none;">[TOC]</textarea>
+        </div>
+    </div>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/editormd.min.js"></script>
+    <script type="text/javascript">
+        var funDownload = function (content,title) {
+        if (title.length <= 0) {
+            title = "Untitled";
+        }
+        var filename=title + ".md"
+        // 创建隐藏的可下载链接
+        var eleLink = document.createElement('a');
+        eleLink.download = filename;
+        eleLink.style.display = 'none';
+        // 字符内容转变成blob地址
+        var blob = new Blob([content], {type:'text/plain;charset=utf-8'});
+        eleLink.href = URL.createObjectURL(blob);
+        // 触发点击
+        document.body.appendChild(eleLink);
+        eleLink.click();
+        // 然后移除
+        document.body.removeChild(eleLink);
+        // alert(content)
+    };
+     var testEditor;
+
+     $(function() {
+        testEditor = editormd("test-editormd", {
+            width   : "90%",
+            height  : 640,
+            syncScrolling : "single",
+            path    : "lib/",
+            imageUpload: true, //开启图片上传
+            imageFormats : ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
+            imageUploadURL: '/markdown/upload', //图片上传后台地址
+            //自定义工具栏显示内容
+        //     toolbarIcons : function() {
+        //         return editormd.toolbarModes["full"]
+        //     // Or return editormd.toolbarModes[name]; // full, simple, mini
+        //     // Using "||" set icons align right.
+        //     // return ["undo", "redo", "|", "bold", "hr", "|", "preview", "watch", "|", "fullscreen", "info", "testIcon", "testIcon2", "file", "faicon", "||", "watch", "fullscreen", "preview", "testIcon"]
+        // },
+                // 工具栏添加一个自定义方法
+                toolbarIcons: function() {
+                // 给工具栏full模式添加一个自定义方法
+                // return editormd.toolbarModes.full.concat(["customIcon"]);
+                return ["undo","redo","getSave","getCache","getDownload","|","bold","del","italic","quote","ucwords","uppercase","lowercase","|","h1","h2","h3","h4","h5","h6","|","list-ul","list-ol","hr","|","link","reference-link","image","code","preformatted-text","code-block","table","datetime","pagebreak","|","goto-line","watch","preview","fullscreen","clear","|","help"]
+                },
+                // 自定义方法的图标 指定一个FontAawsome的图标类
+                toolbarIconsClass: {
+                    getSave: "fa-save",
+                    getCache: "fa-cloud", //fa-save 保存到服务器  //fa-cloud 获得缓存 //fa-cloud-download 下载本地
+                    getDownload: "fa-cloud-download"
+
+                },
+                // 没有图标可以插入内容，字符串或HTML标签
+                toolbarIconTexts: {
+                    getSave: "保存到服务器",
+                    getCache: "从草稿箱加载",
+                    getDownload: "下载到本地"
+                },
+                // 图标的title
+                lang: {
+                    toolbar: {
+                        getSave: "保存到服务器",
+                        getCache: "从草稿箱加载",
+                        getDownload: "下载到本地"
+                }
+                },
+                // 自定义工具栏按钮的事件处理
+                toolbarHandlers: {
+                    getSave: function(){
+                        var textToWrite=testEditor.getMarkdown()
+                        var titleToWrite=$("#get-md-title").val()
+                        $.ajax({
+                            //请求方式
+                            type : "POST",
+                            // //请求的媒体类型
+                            contentType: "application/x-www-form-urlencoded;charset=utf-8",//这里
+                            //预期的服务器响应的数据类型
+                            dataType:'json',
+                            //请求地址
+                            url : "/markdown",
+                            //数据，json字符串
+                            data : {"method":"save_as_service","title":titleToWrite,"content":textToWrite},
+                            //请求成功
+                            success : function(result) {
+                                $("#tipMsg").text(result["message"]);
+                            },
+                            // 请求失败，包含具体的错误信息
+                            error : function(e){
+                                $("#tipMsg").text("保存失败");
+                            }
+                        });
+                    },
+                    getCache: function(){
+                        // 读取缓存内容
+                        testEditor.CodeAutoSaveGetCache();
+                    },
+                    getDownload: function(){
+                        funDownload(testEditor.getMarkdown(),$("#get-md-title").val());
+                    }
+                },
+                // 自定义工具栏按钮的事件处理
+                onload: function() {
+                    // 引入插件 执行监听方法
+                    editormd.loadPlugin("jscustom/code-auto-save", function() {
+                        // 初始化插件 实现监听
+                        testEditor.CodeAutoSave();
+                    });
+                    //图片粘贴上传
+                    editormd.loadPlugin("jscustom/image-handle-paste", function(){
+                        testEditor.imagePaste();
+                    });
+                }
+            });
+
+            // $("#save-md-service").bind('click', function(){
+            //     var textToWrite=testEditor.getMarkdown()
+            //     // var textFileAsBlob = new Blob([ textToWrite ], { type: 'text/plain;charset=utf-8' });
+            //     // saveAs(blob, "文件导出测试.txt");
+            //     // $.ajax({
+            //     //  type : "GET", //提交方式  POST
+            //     //  url : "http://47.103.76.224:13787/gfl4cc?method=get_l4cc_white_ip_port",//路径
+            //     //  data : {
+            //     //   "ip" : "1.1.1.1"
+            //     //  },//数据，这里使用的是Json格式进行传输
+            //     //  success : function(result) {//返回数据根据结果进行相应的处理
+            //     //   if ( result.success ) {
+            //     //      $("#tipMsg").text("success");
+            //     //  } else {
+            //     //      $("#tipMsg").text("失败");
+            //     //  }
+            //     // }
+            //     // });
+
+            //     $.ajax({
+            //         //请求方式
+            //         type : "POST",
+            //         // //请求的媒体类型
+            //         contentType: "application/x-www-form-urlencoded;charset=utf-8",//这里
+            //         //预期的服务器响应的数据类型
+            //         dataType:'json',
+            //         //请求地址
+            //         url : "/markdown",
+            //         //数据，json字符串
+            //         data : {"method":"save_as_service","title":"case","content":textToWrite},
+            //         //请求成功
+            //         success : function(result) {
+            //             $("#tipMsg").text(result["message"]);
+            //         },
+            //         // 请求失败，包含具体的错误信息
+            //         error : function(e){
+            //             $("#tipMsg").text("保存失败");
+            //         }
+            //         // error: function(XMLHttpRequest, textStatus, errorThrown) {
+            //         //     alert(XMLHttpRequest.status);
+            //         //     alert(XMLHttpRequest.readyState);
+            //         //     alert(textStatus);
+            //         // }
+            //     });
+            // });
+
+            // // 删除缓存
+            // testEditor.CodeAutoSaveDelCache();
+            // // 清空缓存的文档内容
+            // testEditor.CodeAutoSaveEmptyCacheContent();
+            // // 自定义设置缓存
+            // testEditor.CodeAutoSaveSetCache('缓存内容');
+            });
+        </script>
+    </body>
+    </html>

@@ -1,0 +1,6 @@
+{
+  "version": "0.1",
+  "markdownpath": "/root/markdown/markdownWeb/webapi/mardownFiles/",
+  "picpath": "/root/markdown/markdownWeb/markdownWeb/upload/editormdPic/",
+  "picurl": "http://x.x.x.x:11223/upload/editormdPic/"
+}
